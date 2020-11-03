@@ -182,6 +182,7 @@ pub fn generate_window_post(
     replicas: &BTreeMap<SectorId, PrivateReplicaInfo>,
     prover_id: ProverId,
 ) -> Result<Vec<(RegisteredPoStProof, SnarkProof)>> {
+    println!("api generate_window_post start");
     ensure!(!replicas.is_empty(), "no replicas supplied");
     let registered_post_proof_type_v1 = replicas
         .values()
@@ -201,6 +202,8 @@ pub fn generate_window_post(
         replicas,
         prover_id,
     )
+
+   // println!("api generate_window_post finish");
 }
 
 fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
@@ -209,9 +212,12 @@ fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
     replicas: &BTreeMap<SectorId, PrivateReplicaInfo>,
     prover_id: ProverId,
 ) -> Result<Vec<(RegisteredPoStProof, SnarkProof)>> {
+    println!("api generate_window_post_inner start");
     let mut replicas_v1 = BTreeMap::new();
 
     for (id, info) in replicas.iter() {
+        println!("api generate_window_post_inner cache_dir {:?}",  info.cache_dir.to_str());
+        println!("api generate_window_post_inner replica_path {:?}",  info.replica_path.to_str());
         let PrivateReplicaInfo {
             registered_proof,
             comm_r,
@@ -233,6 +239,7 @@ fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
     }
 
     ensure!(!replicas_v1.is_empty(), "missing v1 replicas");
+    println!("api generate_window_post_inner: missing v1 replicas");
     let posts_v1 = filecoin_proofs_v1::generate_window_post::<Tree>(
         &registered_proof_v1.as_v1_config(),
         randomness,
@@ -242,6 +249,7 @@ fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
 
     // once there are multiple versions, merge them before returning
 
+    println!("api generate_window_post_inner end");
     Ok(vec![(registered_proof_v1, posts_v1)])
 }
 
@@ -274,6 +282,7 @@ pub fn verify_window_post(
         replicas,
         prover_id,
     )
+
 }
 
 fn verify_window_post_inner<Tree: 'static + MerkleTreeTrait>(
