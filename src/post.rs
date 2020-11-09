@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use anyhow::{ensure, Result};
 use filecoin_proofs_v1::types::MerkleTreeTrait;
 use filecoin_proofs_v1::with_shape;
-
+use std::time::Instant;
 use crate::{
     ChallengeSeed, PoStType, PrivateReplicaInfo, ProverId, PublicReplicaInfo, RegisteredPoStProof,
     SectorId, SnarkProof, Version,
@@ -215,6 +215,7 @@ fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
     println!("api generate_window_post_inner start");
     let mut replicas_v1 = BTreeMap::new();
 
+    let start = Instant::now();
     for (id, info) in replicas.iter() {
         println!("api generate_window_post_inner cache_dir {:?}",  info.cache_dir.to_str());
         println!("api generate_window_post_inner replica_path {:?}",  info.replica_path.to_str());
@@ -237,7 +238,11 @@ fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
 
         replicas_v1.insert(*id, info_v1);
     }
+    let read_time = start.elapsed();
+    println!("read file from disk time {:?}",read_time);
 
+
+    let start1 = Instant::now();
     ensure!(!replicas_v1.is_empty(), "missing v1 replicas");
     println!("api generate_window_post_inner: missing v1 replicas");
     let posts_v1 = filecoin_proofs_v1::generate_window_post::<Tree>(
@@ -246,8 +251,11 @@ fn generate_window_post_inner<Tree: 'static + MerkleTreeTrait>(
         &replicas_v1,
         prover_id,
     )?;
+    let gen_time = start1.elapsed();
+    println!("generate_window_post time {:?}",gen_time);
 
     // once there are multiple versions, merge them before returning
+
 
     println!("api generate_window_post_inner end");
     Ok(vec![(registered_proof_v1, posts_v1)])
